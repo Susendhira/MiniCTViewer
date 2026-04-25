@@ -1,10 +1,12 @@
 # Qt build files
+*.pro.user
+*.pro.user.*
 *.o
 *.moc
 moc_*
 ui_*
 qrc_*
 Makefile
-Build/
-CT_Images/
 
+# Autosave files
+*.autosave
