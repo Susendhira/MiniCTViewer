@@ -1,0 +1,18 @@
+# Qt build files
+*.pro.user
+*.pro.user.*
+Build/
+build/
+*.o
+*.moc
+moc_*
+ui_*
+qrc_*
+Makefile
+MiniCTViewer
+
+# Autosave files
+*.autosave
+
+# CT Images (too large for GitHub)
+CT_Images/
