@@ -1,0 +1,352 @@
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include <QFileDialog>
+#include <QDir>
+#include <QVBoxLayout>
+#include <QMessageBox>
+#include <cmath>
+#include <QScreen>
+#include "dicomloader.h"
+#include <QFileInfo>
+
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent),
+      ui(new Ui::MainWindow),
+      m_currentSlice(0)
+{
+    ui->setupUi(this);
+    setWindowTitle("Mini CT Viewer — SurgeonLabs");
+    setMinimumSize(950, 700);
+
+    setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
+
+    setupViewer();
+    applyStyleSheet();
+    connectSignals();
+}
+
+void MainWindow::setupViewer()
+{
+    m_viewer = new ImageViewer(ui->viewerFrame);
+
+    QVBoxLayout *layout = new QVBoxLayout(ui->viewerFrame);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+    layout->addWidget(m_viewer);
+    ui->viewerFrame->setLayout(layout);
+}
+
+void MainWindow::setupResponsiveLayout()
+{
+    ui->viewerFrame->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    m_viewer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    QScreen *screen = QApplication::primaryScreen();
+    int screenW = screen->availableGeometry().width();
+    int panelW   = qBound(180, (int)(screenW * 0.18), 280);
+
+    ui->controlPanel->setMinimumWidth(panelW);
+    ui->controlPanel->setMaximumWidth(panelW);
+    ui->controlPanel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+
+
+    QLayout *cl = ui->centralwidget->layout();
+    if (QHBoxLayout *hl = qobject_cast<QHBoxLayout*>(cl))
+    {
+        hl->setStretch(0, 4);
+        hl->setStretch(1, 1);
+        hl->setContentsMargins(8, 8, 8, 4);
+        hl->setSpacing(8);
+    }
+
+    QScreen *scr = QApplication::primaryScreen();
+    int screenH  = scr->availableGeometry().height();
+    int navH     = qBound(45, (int)(screenH * 0.06), 70);
+    ui->navBar->setFixedHeight(navH);
+    ui->navBar->layout()->setContentsMargins(8, 4, 8, 4);
+
+    int btnW = qBound(60, (int)(screenW * 0.05), 90);
+    ui->prevBtn->setFixedWidth(btnW);
+    ui->nextBtn->setFixedWidth(btnW);
+    ui->sliceLabel->setMinimumWidth(120);
+
+    ui->sliceSlider->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+
+    QList<QPushButton*> allBtns = ui->controlPanel->findChildren<QPushButton*>();
+    int btnH = qBound(30, (int)(screenH * 0.045), 50);
+    for (QPushButton *btn : allBtns)
+    {
+        btn->setMinimumHeight(btnH);
+        btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    }
+
+    ui->openFolderBtn->setMinimumHeight(btnH + 10);
+
+    QList<QSlider*> allSliders = ui->controlPanel->findChildren<QSlider*>();
+    for (QSlider *s : allSliders)
+    {
+        s->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    }
+
+    QList<QGroupBox*> allGroups = ui->controlPanel->findChildren<QGroupBox*>();
+    for (QGroupBox *g : allGroups)
+    {
+        g->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    }
+
+    ui->statusLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    ui->statusLabel->setWordWrap(true);
+}
+
+void MainWindow::connectSignals()
+{
+    connect(ui->openFolderBtn, &QPushButton::clicked, this, &MainWindow::openFolder);
+
+    connect(ui->sliceSlider, &QSlider::valueChanged, this, &MainWindow::goToSlice);
+    connect(ui->prevBtn, &QPushButton::clicked, this, &MainWindow::prevSlice);
+    connect(ui->nextBtn, &QPushButton::clicked, this, &MainWindow::nextSlice);
+
+    connect(ui->brightnessSlider, &QSlider::valueChanged, this, &MainWindow::onBrightnessChanged);
+    connect(ui->contrastSlider, &QSlider::valueChanged, this, &MainWindow::onContrastChanged);
+
+    connect(ui->lineToolBtn, &QPushButton::clicked, this, &MainWindow::enableLineTool);
+    connect(ui->rectToolBtn, &QPushButton::clicked, this, &MainWindow::enableRectTool);
+    connect(ui->disableToolBtn, &QPushButton::clicked, this, &MainWindow::disableAnnotation);
+
+    connect(ui->zoomInBtn, &QPushButton::clicked,
+            [this](){ m_viewer->setZoomFactor(m_viewer->currentZoom() + 0.2); });
+    connect(ui->zoomOutBtn, &QPushButton::clicked,
+            [this](){ m_viewer->setZoomFactor(m_viewer->currentZoom() - 0.2); });
+
+    connect(ui->resetViewBtn, &QPushButton::clicked, m_viewer, &ImageViewer::resetView);
+    connect(m_viewer, &ImageViewer::annotationFinished, this, &MainWindow::onAnnotationFinished);
+}
+
+void MainWindow::openFolder()
+{
+    QString folder = QFileDialog::getExistingDirectory(
+        this, "Open CT Image Folder", QDir::homePath());
+    if (folder.isEmpty()) return;
+
+    QDir dir(folder);
+    QStringList filters = {"*.png","*.jpg","*.jpeg","*.bmp","*.tiff","*.tif"};
+    dir.setNameFilters(filters);
+    dir.setSorting(QDir::Name);
+
+    m_imagePaths.clear();
+    for (const QString &f : dir.entryList())
+        m_imagePaths << folder + "/" + f;
+
+    if (m_imagePaths.isEmpty()) 
+    {
+        QMessageBox::warning(this, "No Images", "No supported images found.\nSupported: PNG, JPG, BMP, TIFF");
+        return;
+    }
+
+    ui->sliceSlider->blockSignals(true);
+    ui->sliceSlider->setMinimum(0);
+    ui->sliceSlider->setMaximum(m_imagePaths.size() - 1);
+    ui->sliceSlider->setValue(0);
+    ui->sliceSlider->blockSignals(false);
+
+    m_currentSlice = 0;
+    loadSlice(0);
+
+    ui->statusLabel->setText(QString("✅ %1 images loaded").arg(m_imagePaths.size()));
+}
+
+void MainWindow::loadSlice(int index)
+{
+    if (index < 0 || index >= m_imagePaths.size()) return;
+
+    QPixmap pix(m_imagePaths[index]);
+    if (pix.isNull()) 
+    {
+        ui->statusLabel->setText("❌ Failed to load: " +
+            QFileInfo(m_imagePaths[index]).fileName());
+        return;
+    }
+
+    m_viewer->setImage(pix);
+    m_currentSlice = index;
+    updateSliceLabel();
+}
+
+void MainWindow::goToSlice(int index)
+{
+    loadSlice(index);
+}
+
+void MainWindow::nextSlice()
+{
+    if (m_imagePaths.isEmpty()) return;
+    if (m_currentSlice < m_imagePaths.size() - 1) 
+    {
+        int next = m_currentSlice + 1;
+
+        ui->sliceSlider->blockSignals(true);
+        ui->sliceSlider->setValue(next);
+        
+        ui->sliceSlider->blockSignals(false);
+        loadSlice(next);
+    }
+}
+
+void MainWindow::prevSlice()
+{
+    if (m_imagePaths.isEmpty()) return;
+    if (m_currentSlice > 0)
+    {
+        int prev = m_currentSlice - 1;
+        ui->sliceSlider->blockSignals(true);
+        ui->sliceSlider->setValue(prev);
+        
+        ui->sliceSlider->blockSignals(false);
+        loadSlice(prev);
+    }
+}
+
+void MainWindow::updateSliceLabel()
+{
+    ui->sliceLabel->setText(QString("Slice %1 / %2")
+            .arg(m_currentSlice + 1).arg(m_imagePaths.size()));
+}
+
+void MainWindow::onBrightnessChanged(int value)
+{
+    ui->brightnessValueLabel->setText(QString::number(value));
+    m_viewer->setBrightness(value);
+}
+
+void MainWindow::onContrastChanged(int value)
+{
+    ui->contrastValueLabel->setText(QString::number(value));
+    m_viewer->setContrast(value);
+}
+
+void MainWindow::onAnnotationFinished(const Annotation &ann)
+{
+    double dist = std::sqrt(
+        std::pow(ann.endPoint.x() - ann.startPoint.x(), 2) +
+        std::pow(ann.endPoint.y() - ann.startPoint.y(), 2));
+
+    if (ann.type == Annotation::Line)
+        ui->statusLabel->setText(QString("📏 Line: %1 px").arg((int)dist));
+    else 
+    {
+        int w = std::abs(ann.endPoint.x() - ann.startPoint.x());
+        int h = std::abs(ann.endPoint.y() - ann.startPoint.y());
+        ui->statusLabel->setText(QString("⬜ Rect: %1 x %2 px").arg(w).arg(h));
+    }
+}
+
+void MainWindow::enableLineTool()
+{
+    ui->rectToolBtn->setChecked(false);
+    ui->lineToolBtn->setChecked(true);
+    m_viewer->setAnnotationMode(true, Annotation::Line);
+    ui->statusLabel->setText("✏️ Line tool active");
+}
+
+void MainWindow::enableRectTool()
+{
+    ui->lineToolBtn->setChecked(false);
+    ui->rectToolBtn->setChecked(true);
+    m_viewer->setAnnotationMode(true, Annotation::Rectangle);
+    ui->statusLabel->setText("⬜ Rectangle tool active");
+}
+
+void MainWindow::disableAnnotation()
+{
+    ui->lineToolBtn->setChecked(false);
+    ui->rectToolBtn->setChecked(false);
+    m_viewer->setAnnotationMode(false, Annotation::Line);
+    ui->statusLabel->setText("🖐 Ready");
+}
+
+void MainWindow::applyStyleSheet()
+{
+    QScreen *screen = QApplication::primaryScreen();
+    int screenH = screen->availableGeometry().height();
+
+    int fontSize = qBound(11, (int)(screenH * 0.016), 15);
+
+    setStyleSheet(QString(R"(
+        QMainWindow, QWidget {
+            background-color: #1e1e2e;
+            color: #cdd6f4;
+            font-family: Segoe UI, Ubuntu, sans-serif;
+            font-size: %1px;
+        }
+        QPushButton {
+            background-color: #313244;
+            color: #cdd6f4;
+            border: 1px solid #45475a;
+            border-radius: 6px;
+            padding: 5px 8px;
+        }
+        QPushButton:hover  { background-color: #45475a; }
+        QPushButton:checked {
+            background-color: #89b4fa;
+            color: #1e1e2e;
+            font-weight: bold;
+        }
+        QPushButton:pressed { background-color: #74c7ec; }
+        QSlider::groove:horizontal {
+            height: 6px;
+            background: #45475a;
+            border-radius: 3px;
+        }
+        QSlider::handle:horizontal {
+            background: #89b4fa;
+            width: 14px;
+            height: 14px;
+            margin: -4px 0;
+            border-radius: 7px;
+        }
+        QSlider::sub-page:horizontal {
+            background: #89b4fa;
+            border-radius: 3px;
+        }
+        QGroupBox {
+            border: 1px solid #45475a;
+            border-radius: 8px;
+            margin-top: 10px;
+            padding-top: 6px;
+            font-weight: bold;
+            color: #89b4fa;
+        }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 10px;
+            padding: 0 4px;
+        }
+        QLabel { color: #cdd6f4; }
+        QFrame#viewerFrame {
+            background-color: #000000;
+            border: 2px solid #45475a;
+            border-radius: 8px;
+        }
+        #statusLabel {
+            color: #a6e3a1;
+            font-style: italic;
+            padding: 4px;
+        }
+        #sliceLabel {
+            color: #89b4fa;
+            font-weight: bold;
+        }
+        #openFolderBtn {
+            background-color: #89b4fa;
+            color: #1e1e2e;
+            font-weight: bold;
+            font-size: %2px;
+        }
+        #openFolderBtn:hover { background-color: #74c7ec; }
+    )").arg(fontSize).arg(fontSize + 1));
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
