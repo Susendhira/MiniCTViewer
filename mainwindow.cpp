@@ -6,8 +6,6 @@
 #include <QMessageBox>
 #include <cmath>
 #include <QScreen>
-#include "dicomloader.h"
-#include <QFileInfo>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
@@ -23,11 +21,6 @@ MainWindow::MainWindow(QWidget *parent)
     setupViewer();
     applyStyleSheet();
     connectSignals();
-}
-
-MainWindow::~MainWindow()
-{
-    delete ui;
 }
 
 void MainWindow::setupViewer()
@@ -142,13 +135,12 @@ void MainWindow::openFolder()
     for (const QString &f : dir.entryList())
         m_imagePaths << folder + "/" + f;
 
-    if (m_imagePaths.isEmpty()) {
-        QMessageBox::warning(this, "No Images",
-            "No supported images found.\nSupported: PNG, JPG, BMP, TIFF");
+    if (m_imagePaths.isEmpty())
+    {
+        QMessageBox::warning(this, "No Images", "No supported images found.\nSupported: PNG, JPG, BMP, TIFF");
         return;
     }
 
-    // ── Block signals while setting up slider ──
     ui->sliceSlider->blockSignals(true);
     ui->sliceSlider->setMinimum(0);
     ui->sliceSlider->setMaximum(m_imagePaths.size() - 1);
@@ -158,8 +150,7 @@ void MainWindow::openFolder()
     m_currentSlice = 0;
     loadSlice(0);
 
-    ui->statusLabel->setText(
-        QString("✅ %1 images loaded").arg(m_imagePaths.size()));
+    ui->statusLabel->setText(QString("✅ %1 images loaded").arg(m_imagePaths.size()));
 }
 
 void MainWindow::loadSlice(int index)
@@ -167,7 +158,8 @@ void MainWindow::loadSlice(int index)
     if (index < 0 || index >= m_imagePaths.size()) return;
 
     QPixmap pix(m_imagePaths[index]);
-    if (pix.isNull()) {
+    if (pix.isNull())
+    {
         ui->statusLabel->setText("❌ Failed to load: " +
             QFileInfo(m_imagePaths[index]).fileName());
         return;
@@ -186,11 +178,13 @@ void MainWindow::goToSlice(int index)
 void MainWindow::nextSlice()
 {
     if (m_imagePaths.isEmpty()) return;
-    if (m_currentSlice < m_imagePaths.size() - 1) {
+    if (m_currentSlice < m_imagePaths.size() - 1)
+    {
         int next = m_currentSlice + 1;
 
         ui->sliceSlider->blockSignals(true);
         ui->sliceSlider->setValue(next);
+
         ui->sliceSlider->blockSignals(false);
         loadSlice(next);
     }
@@ -199,10 +193,12 @@ void MainWindow::nextSlice()
 void MainWindow::prevSlice()
 {
     if (m_imagePaths.isEmpty()) return;
-    if (m_currentSlice > 0) {
+    if (m_currentSlice > 0)
+    {
         int prev = m_currentSlice - 1;
         ui->sliceSlider->blockSignals(true);
         ui->sliceSlider->setValue(prev);
+
         ui->sliceSlider->blockSignals(false);
         loadSlice(prev);
     }
@@ -210,10 +206,8 @@ void MainWindow::prevSlice()
 
 void MainWindow::updateSliceLabel()
 {
-    ui->sliceLabel->setText(
-        QString("Slice %1 / %2")
-            .arg(m_currentSlice + 1)
-            .arg(m_imagePaths.size()));
+    ui->sliceLabel->setText(QString("Slice %1 / %2")
+            .arg(m_currentSlice + 1).arg(m_imagePaths.size()));
 }
 
 void MainWindow::onBrightnessChanged(int value)
@@ -236,7 +230,8 @@ void MainWindow::onAnnotationFinished(const Annotation &ann)
 
     if (ann.type == Annotation::Line)
         ui->statusLabel->setText(QString("📏 Line: %1 px").arg((int)dist));
-    else {
+    else
+    {
         int w = std::abs(ann.endPoint.x() - ann.startPoint.x());
         int h = std::abs(ann.endPoint.y() - ann.startPoint.y());
         ui->statusLabel->setText(QString("⬜ Rect: %1 x %2 px").arg(w).arg(h));
@@ -347,4 +342,9 @@ void MainWindow::applyStyleSheet()
         }
         #openFolderBtn:hover { background-color: #74c7ec; }
     )").arg(fontSize).arg(fontSize + 1));
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
 }

@@ -1370,33 +1370,6 @@ mainwindow.o: ../mainwindow.cpp ../mainwindow.h \
 		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtGui/QMouseEvent \
 		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtGui/QWheelEvent \
 		ui_mainwindow.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtCore/QVariant \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/QApplication \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/qapplication.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtCore/qcoreapplication.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtCore/qeventloop.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/qdesktopwidget.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtGui/qguiapplication.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtGui/qinputmethod.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/QFrame \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/qframe.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/QGroupBox \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/qgroupbox.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/QLabel \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/qlabel.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/QMenuBar \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/qmenubar.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/qmenu.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/qaction.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/qactiongroup.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/QPushButton \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/qpushbutton.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/qabstractbutton.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/QSlider \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/qslider.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/qabstractslider.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/QStatusBar \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/qstatusbar.h \
 		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/QFileDialog \
 		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtWidgets/qfiledialog.h \
 		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtCore/qdir.h \
@@ -1417,11 +1390,7 @@ mainwindow.o: ../mainwindow.cpp ../mainwindow.h \
 		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtCore/QRect \
 		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtCore/QSize \
 		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtCore/QSizeF \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtGui/QTransform \
-		../dicomloader.h \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtCore/QString \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtGui/QImage \
-		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtCore/QFileInfo
+		../../../Qt/Qt5.14.1/5.14.1/gcc_64/include/QtGui/QTransform
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o ../mainwindow.cpp
 
 moc_imageviewer.o: moc_imageviewer.cpp 

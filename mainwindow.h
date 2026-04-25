@@ -5,7 +5,6 @@
 #include <QStringList>
 #include "imageviewer.h"
 
-// Auto-generated UI class from mainwindow.ui
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE

@@ -63,16 +63,19 @@ void ImageViewer::setAnnotationMode(bool enabled, Annotation::Type type)
 
 void ImageViewer::applyImageAdjustments()
 {
-    if (m_originalPixmap.isNull()) return;
+    if (m_originalPixmap.isNull())
+        return;
 
     QImage img = m_originalPixmap.toImage().convertToFormat(QImage::Format_RGB32);
 
     double contrast = (100.0 + m_contrast) / 100.0;
     int    bright   = m_brightness;
 
-    for (int y = 0; y < img.height(); ++y) {
+    for (int y = 0; y < img.height(); ++y)
+    {
         QRgb *line = reinterpret_cast<QRgb*>(img.scanLine(y));
-        for (int x = 0; x < img.width(); ++x) {
+        for (int x = 0; x < img.width(); ++x)
+        {
             QColor c(line[x]);
 
             int r = qBound(0, (int)((c.red()   - 128) * contrast + 128) + bright, 255);
@@ -114,7 +117,8 @@ void ImageViewer::paintEvent(QPaintEvent *)
     QPainter painter(this);
     painter.fillRect(rect(), Qt::black);
 
-    if (m_displayPixmap.isNull()) {
+    if (m_displayPixmap.isNull())
+    {
         painter.setPen(Qt::gray);
         painter.drawText(rect(), Qt::AlignCenter, "No Image Loaded");
         return;
@@ -128,7 +132,8 @@ void ImageViewer::paintEvent(QPaintEvent *)
     painter.drawPixmap(x0, y0, imgW, imgH, m_displayPixmap);
 
     painter.setPen(QPen(Qt::yellow, 2));
-    for (const Annotation &ann : m_annotations) {
+    for (const Annotation &ann : m_annotations)
+    {
         QPoint s = toWidgetCoords(ann.startPoint);
         QPoint e = toWidgetCoords(ann.endPoint);
 
@@ -137,7 +142,9 @@ void ImageViewer::paintEvent(QPaintEvent *)
             double dist = std::sqrt(std::pow(ann.endPoint.x() - ann.startPoint.x(), 2)
                                   + std::pow(ann.endPoint.y() - ann.startPoint.y(), 2));
             painter.drawText(e + QPoint(5, -5), QString("%1 px").arg((int)dist));
-        } else {
+        }
+        else
+        {
             painter.drawRect(QRect(s, e).normalized());
             int w = std::abs(ann.endPoint.x() - ann.startPoint.x());
             int h = std::abs(ann.endPoint.y() - ann.startPoint.y());
@@ -145,11 +152,15 @@ void ImageViewer::paintEvent(QPaintEvent *)
         }
     }
 
-    if (m_isDrawing) {
+    if (m_isDrawing)
+    {
         painter.setPen(QPen(Qt::cyan, 2, Qt::DashLine));
-        if (m_annotationType == Annotation::Line) {
+        if (m_annotationType == Annotation::Line)
+        {
             painter.drawLine(m_drawStart, m_drawEnd);
-        } else {
+        }
+        else
+        {
             painter.drawRect(QRect(m_drawStart, m_drawEnd).normalized());
         }
     }
@@ -157,12 +168,16 @@ void ImageViewer::paintEvent(QPaintEvent *)
 
 void ImageViewer::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton) {
-        if (m_annotationMode) {
+    if (event->button() == Qt::LeftButton)
+    {
+        if (m_annotationMode)
+        {
             m_isDrawing  = true;
             m_drawStart  = event->pos();
             m_drawEnd    = event->pos();
-        } else {
+        }
+        else
+        {
             m_isPanning      = true;
             m_lastMousePos   = event->pos();
             setCursor(Qt::ClosedHandCursor);
@@ -172,12 +187,15 @@ void ImageViewer::mousePressEvent(QMouseEvent *event)
 
 void ImageViewer::mouseMoveEvent(QMouseEvent *event)
 {
-    if (m_isPanning) {
+    if (m_isPanning)
+    {
         QPoint delta  = event->pos() - m_lastMousePos;
         m_panOffset  += delta;
         m_lastMousePos = event->pos();
         update();
-    } else if (m_isDrawing) {
+    }
+    else if (m_isDrawing)
+    {
         m_drawEnd = event->pos();
         update();
     }
@@ -185,11 +203,15 @@ void ImageViewer::mouseMoveEvent(QMouseEvent *event)
 
 void ImageViewer::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton) {
-        if (m_isPanning) {
+    if (event->button() == Qt::LeftButton)
+    {
+        if (m_isPanning)
+        {
             m_isPanning = false;
             setCursor(Qt::OpenHandCursor);
-        } else if (m_isDrawing) {
+        }
+        else if (m_isDrawing)
+        {
             m_isDrawing = false;
 
             Annotation ann;
