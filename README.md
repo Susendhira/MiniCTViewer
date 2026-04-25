@@ -33,5 +33,9 @@ make
 ./MiniCTViewer
 ```
 
-## Project Structure
-
+## How to Use
+1. Click **Open Folder** to load CT images
+2. Use **Prev/Next** buttons or **slider** to navigate slices
+3. **Scroll mouse wheel** to zoom, **click and drag** to pan
+4. Adjust **Brightness** and **Contrast** in real time
+5. Use **Draw Line** or **Draw Rectangle** to annotate with pixel measurements
